@@ -178,6 +178,17 @@ func sanitizeConfigYAMLForDownstream(payload []byte) ([]byte, error) {
 		delete(normalized, key)
 	}
 	appconfig.ApplyDownstreamHomeModeScalars(normalized)
+	if rawFormat, exists := normalized["request-log-format"]; exists {
+		if formatStr, ok := rawFormat.(string); ok {
+			normalizedFormat := strings.ToLower(strings.TrimSpace(formatStr))
+			switch normalizedFormat {
+			case "":
+				delete(normalized, "request-log-format")
+			case "text", "json":
+				normalized["request-log-format"] = normalizedFormat
+			}
+		}
+	}
 	forced, errMarshal := yaml.Marshal(normalized)
 	if errMarshal != nil {
 		return nil, fmt.Errorf("home runtime: marshal downstream config root: %w", errMarshal)
